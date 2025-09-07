@@ -10,6 +10,8 @@ import {
   createTheme,
   CircularProgress,
   Pagination,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { ShoppingCart } from 'lucide-react';
 import ProductSearch from './components/ProductSearch';
@@ -75,9 +77,22 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showVotingSection, setShowVotingSection] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
   
   const ITEMS_PER_PAGE = 20; // Show only 20 products per page
   const debouncedSearchTerm = useDebounce(searchTerm, 300); // Debounce search by 300ms
+
+  // Helper function to show snackbar notification
+  const showSnackbar = useCallback((message: string) => {
+    setSnackbarMessage(message);
+    setSnackbarOpen(true);
+  }, []);
+
+  // Handle snackbar close
+  const handleSnackbarClose = useCallback(() => {
+    setSnackbarOpen(false);
+  }, []);
 
   // Generate categories dynamically from the actual products
   const categories = useMemo(() => {
@@ -301,12 +316,12 @@ function App() {
       }
 
       console.log('✅ Vote recorded successfully');
-      // You could add a toast notification here in the future
+      showSnackbar('✅ Vote registered successfully!');
     } catch (error) {
       console.error('Error voting:', error);
       alert('Failed to vote. Please try again.');
     }
-  }, [products]);
+  }, [products, showSnackbar]);
 
   const handleRequestProduct = useCallback(async (productName: string, category: string) => {
     try {
@@ -354,7 +369,13 @@ function App() {
 
       if (productError) {
         console.error('Error creating product:', productError);
-        alert('Failed to create product. Please try again.');
+        console.error('Product data:', {
+          id: newProduct.id,
+          name: newProduct.name,
+          category: newProduct.category,
+          description: newProduct.description
+        });
+        alert(`Failed to create product: ${productError.message}`);
         return;
       }
 
@@ -370,11 +391,12 @@ function App() {
 
       setProducts(prevProducts => [newProduct, ...prevProducts]);
       setShowVotingSection(false);
+      showSnackbar('🎉 Product requested successfully!');
     } catch (error) {
       console.error('Error requesting product:', error);
       alert('Failed to request product. Please try again.');
     }
-  }, []);
+  }, [showSnackbar]);
 
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
 
@@ -467,6 +489,22 @@ function App() {
           )}
         </Container>
       </Box>
+      
+      {/* Success notification */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity="success" 
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </ThemeProvider>
   );
 }
