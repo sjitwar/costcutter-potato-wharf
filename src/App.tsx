@@ -386,7 +386,7 @@ function App() {
           <Toolbar>
             <ShoppingCart style={{ marginRight: 16 }} />
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              CostCutter Products
+              Costcutter Products
             </Typography>
             <Typography variant="body2" sx={{ mr: 2 }}>
               Vote for products you'd like to see!
