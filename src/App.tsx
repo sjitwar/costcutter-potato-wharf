@@ -122,7 +122,7 @@ function App() {
           const { data, error } = await supabase
             .from('products_with_votes')
             .select('*')
-            .order('vote_count', { ascending: false })
+            .order('name', { ascending: true }) // Order by name instead of vote_count
             .range(from, from + pageSize - 1);
 
           if (error) {
@@ -164,7 +164,37 @@ function App() {
         }
 
         console.log(`✅ Loaded ${allProducts.length} products from Supabase`);
-        setProducts(allProducts);
+        
+        // Remove duplicates based on product ID
+        const uniqueProducts = allProducts.reduce((acc: any[], product: any) => {
+          if (!acc.find((p: any) => p.id === product.id)) {
+            acc.push(product);
+          }
+          return acc;
+        }, []);
+        
+        console.log(`🔄 Removed ${allProducts.length - uniqueProducts.length} duplicate products`);
+        
+        // Debug: Check for specific products
+        const bananaProducts = uniqueProducts.filter((p: any) => 
+          p.name.toLowerCase().includes('banana')
+        );
+        const appleProducts = uniqueProducts.filter((p: any) => 
+          p.name.toLowerCase().includes('apple')
+        );
+        const gingerProducts = uniqueProducts.filter((p: any) => 
+          p.name.toLowerCase().includes('ginger')
+        );
+        
+        console.log(`🍌 Found ${bananaProducts.length} banana products:`, bananaProducts.map((p: any) => p.name));
+        console.log(`🍎 Found ${appleProducts.length} apple products:`, appleProducts.map((p: any) => p.name));
+        console.log(`🫚 Found ${gingerProducts.length} ginger products:`, gingerProducts.map((p: any) => p.name));
+        
+        // Debug: Check vote counts
+        const zeroVoteProducts = uniqueProducts.filter((p: any) => p.vote_count === 0);
+        console.log(`📊 Products with 0 votes: ${zeroVoteProducts.length}`);
+        
+        setProducts(uniqueProducts);
       } catch (error) {
         console.error('Error loading products:', error);
       } finally {
@@ -225,6 +255,7 @@ function App() {
   const filteredProducts = useMemo(() => {
     // If no search term and "All" category is selected, show popular products
     if (!debouncedSearchTerm && selectedCategory === 'All') {
+      console.log('🏠 Showing popular products:', popularProducts.length);
       return popularProducts;
     }
     
@@ -239,6 +270,8 @@ function App() {
       
       return matchesSearch && matchesCategory;
     });
+    
+    console.log(`🔍 Filtered results for "${debouncedSearchTerm}" in category "${selectedCategory}": ${filtered.length} products`);
     
     // Sort by vote count (highest first) to ensure most voted products appear at the top
     return filtered.sort((a, b) => (b.vote_count || 0) - (a.vote_count || 0));
